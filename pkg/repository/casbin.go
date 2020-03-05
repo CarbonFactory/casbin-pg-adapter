@@ -1,9 +1,10 @@
 package repository
 
 import (
-	"database/sql"
 	"fmt"
 	"strings"
+
+	"github.com/go-pg/pg"
 
 	"github.com/CarbonFactory/casbin-pg-adapter/pkg/model"
 )
@@ -11,11 +12,11 @@ import (
 // CasbinRuleRepository is the bridge for adapter and db
 type CasbinRuleRepository struct {
 	tableName string
-	db        *sql.DB
+	db        *pg.DB
 }
 
 // NewCasbinRuleRepository returns a new CasbinRuleRepository
-func NewCasbinRuleRepository(tableName string, db *sql.DB) *CasbinRuleRepository {
+func NewCasbinRuleRepository(tableName string, db *pg.DB) *CasbinRuleRepository {
 	return &CasbinRuleRepository{
 		tableName: tableName,
 		db:        db,
@@ -24,45 +25,15 @@ func NewCasbinRuleRepository(tableName string, db *sql.DB) *CasbinRuleRepository
 
 // LoadAllCasbinRules loads all casbin rules from db
 func (repository *CasbinRuleRepository) LoadAllCasbinRules() ([]model.CasbinRule, error) {
-	rows, err := repository.db.Query(fmt.Sprintf(`
-		SELECT p_type, v0, v1, v2, v3, v4, v5 FROM %s
-	`, repository.tableName))
+	var casbinRules []model.CasbinRule
+
+	sqlstr := fmt.Sprintf(`SELECT p_type, v0, v1, v2, v3, v4, v5 FROM %s`, repository.tableName)
+
+	_, err := repository.db.Query(&casbinRules, sqlstr)
 	if err != nil {
-		return nil, err
+		return casbinRules, err
 	}
-	defer rows.Close()
-	casbinRules := make([]model.CasbinRule, 0)
-	for rows.Next() {
-		var pType string
-		var v0 string
-		var v1 string
-		var v2 string
-		var v3 string
-		var v4 string
-		var v5 string
-		scanErr := rows.Scan(
-			&pType,
-			&v0,
-			&v1,
-			&v2,
-			&v3,
-			&v4,
-			&v5,
-		)
-		if scanErr != nil {
-			return nil, scanErr
-		}
-		casbinRule := model.CasbinRule{
-			PType: pType,
-			V0:    v0,
-			V1:    v1,
-			V2:    v2,
-			V3:    v3,
-			V4:    v4,
-			V5:    v5,
-		}
-		casbinRules = append(casbinRules, casbinRule)
-	}
+
 	return casbinRules, nil
 }
 

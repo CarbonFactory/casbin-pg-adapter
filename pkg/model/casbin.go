@@ -10,13 +10,14 @@ const (
 
 // CasbinRule is the model for casbin rule
 type CasbinRule struct {
-	PType string
-	V0    string
-	V1    string
-	V2    string
-	V3    string
-	V4    string
-	V5    string
+	TableName struct{} `sql:"x_policy" pg:",discard_unknown_columns" `
+	PType     string   `sql:",pType" db:"p_type" `
+	V0        string   `sql:",v0" db:"v0" `
+	V1        string   `sql:",v1" db:"v1" `
+	V2        string   `sql:",v2" db:"v2" `
+	V3        string   `sql:",v3" db:"v3" `
+	V4        string   `sql:",v4" db:"v4" `
+	V5        string   `sql:",v5" db:"v5" `
 }
 
 // NewCasbinRuleFromPTypeAndRule returns a CasbinRule from pType and rule
