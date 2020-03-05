@@ -1,4 +1,4 @@
-module github.com/cychiuae/casbin-pg-adapter
+module github.com/CarbonFactory/casbin-pg-adapter
 
 go 1.14
 
