@@ -1,7 +1,6 @@
 package casbinpgadapter
 
 import (
-	"database/sql"
 	"fmt"
 	"log"
 
@@ -9,6 +8,7 @@ import (
 	"github.com/casbin/casbin/v2/persist"
 
 	// no-lint
+	"github.com/go-pg/pg"
 	_ "github.com/lib/pq"
 
 	"github.com/CarbonFactory/casbin-pg-adapter/pkg/model"
@@ -17,14 +17,14 @@ import (
 
 // Adapter is a postgresql adaptor for casbin
 type Adapter struct {
-	db                   *sql.DB
+	db                   *pg.DB
 	dbSchema             string
 	tableName            string
 	casbinRuleRepository *repository.CasbinRuleRepository
 }
 
 // NewAdapter returns a new casbin postgresql adapter
-func NewAdapter(db *sql.DB, tableName string) (*Adapter, error) {
+func NewAdapter(db *pg.DB, tableName string) (*Adapter, error) {
 	return NewAdapterWithDBSchema(db, "public", tableName)
 }
 

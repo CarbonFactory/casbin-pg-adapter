@@ -1,9 +1,10 @@
 package repository
 
 import (
-	"database/sql"
 	"fmt"
 	"strings"
+
+	"github.com/go-pg/pg"
 
 	"github.com/CarbonFactory/casbin-pg-adapter/pkg/model"
 )
@@ -12,11 +13,11 @@ import (
 type CasbinRuleRepository struct {
 	dbSchema  string
 	tableName string
-	db        *sql.DB
+	db        *pg.DB
 }
 
 // NewCasbinRuleRepository returns a new CasbinRuleRepository
-func NewCasbinRuleRepository(dbSchema string, tableName string, db *sql.DB) *CasbinRuleRepository {
+func NewCasbinRuleRepository(tableName string, db *pg.DB) *CasbinRuleRepository {
 	return &CasbinRuleRepository{
 		dbSchema:  dbSchema,
 		tableName: tableName,
@@ -26,14 +27,15 @@ func NewCasbinRuleRepository(dbSchema string, tableName string, db *sql.DB) *Cas
 
 // LoadAllCasbinRules loads all casbin rules from db
 func (repository *CasbinRuleRepository) LoadAllCasbinRules() ([]model.CasbinRule, error) {
-	rows, err := repository.db.Query(fmt.Sprintf(`
-		SELECT p_type, v0, v1, v2, v3, v4, v5 FROM "%s"."%s"
-	`, repository.dbSchema, repository.tableName))
+	var casbinRules []model.CasbinRule
+
+	sqlstr := fmt.Sprintf(`SELECT p_type, v0, v1, v2, v3, v4, v5 FROM %s.%s`, repository.dbSchema, repository.tableName)
+
+	_, err := repository.db.Query(&casbinRules, sqlstr)
 	if err != nil {
-		return nil, err
+		return casbinRules, err
 	}
-	defer rows.Close()
-	return loadPolicyFromRows(rows)
+
 }
 
 // LoadFilteredRules loads casbin rules filtered
@@ -100,7 +102,7 @@ func (repository *CasbinRuleRepository) InsertCasbinRule(casbinRule model.Casbin
 	}
 	_, err = tx.Exec(
 		fmt.Sprintf(`
-			INSERT INTO "%s"."%s" (p_type, v0, v1, v2, v3, v4, v5)
+			INSERT INTO %s.%s (p_type, v0, v1, v2, v3, v4, v5)
 			VALUES
 				($1, $2, $3, $4, $5, $6, $7)
 		`, repository.dbSchema, repository.tableName),
@@ -209,7 +211,7 @@ func (repository *CasbinRuleRepository) ReplaceAllCasbinRules(casbinRules []mode
 	_, err = tx.Exec(
 		fmt.Sprintf(
 			`
-				INSERT INTO "%s".%s (p_type, v0, v1, v2, v3, v4, v5)
+				INSERT INTO %s.%s (p_type, v0, v1, v2, v3, v4, v5)
 				VALUES %s
 			`,
 			repository.dbSchema,
